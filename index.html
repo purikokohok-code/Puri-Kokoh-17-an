@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Puri FinC 17 V.1.0 (PWA Edition)</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icon-192x192.png">
+  <link rel="manifest" href="/manifest.json">
+  
+  <style>
+    body { -webkit-tap-highlight-color: transparent; user-select: none; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none; margin: 0;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW reg failed:', err));
+      });
+    }
+  </script>
+
+  <div id="custom-msgbox" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center">
+      <div id="msg-icon" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"></div>
+      <h3 id="msg-title" class="text-lg font-bold text-white mb-1">Notifikasi</h3>
+      <p id="msg-text" class="text-sm text-slate-400 mb-5 leading-relaxed"></p>
+      <button onclick="tutupMsgBox()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl transition">Selesai</button>
+    </div>
+  </div>
+
+  <div id="custom-confirmbox" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto mb-3 text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-1">Konfirmasi Tindakan</h3>
+      <p id="confirm-text" class="text-sm text-slate-400 mb-5">Apakah anda yakin ingin memproses data ini?</p>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="tutupConfirmBox(false)" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-xl transition">Batal</button>
+        <button onclick="tutupConfirmBox(true)" class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 px-4 rounded-xl transition">Ya, Proses</button>
+      </div>
+    </div>
+  </div>
+<div id="form-login" class="flex-1 flex flex-col justify-center items-center px-6 py-12">
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-xl w-full max-w-sm border border-slate-700 text-center">
+      <div class="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+        <i class="fa-solid fa-house-chimney text-xl text-white"></i>
+      </div>
+      <h2 class="text-xl font-bold text-white mb-5">Puri FinC 17 V.0.0</h2>
+      <div class="space-y-4 text-left">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Username</label>
+          <input type="text" id="txt-username" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="Username">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Password</label>
+          <div class="relative">
+            <input type="password" id="txt-password" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-10 py-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
+            <button onclick="togglePassword()" class="absolute right-3 top-3 text-slate-400"><i id="eye-icon" class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        <button onclick="prosesLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition mt-2">LOG IN</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="form-menu" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <div class="flex justify-between items-center mb-4 bg-slate-800 p-4 rounded-xl border border-slate-700">
+      <div>
+        <p class="text-xs text-slate-400">Selamat Datang,</p>
+        <h3 id="lbl-nama" class="font-bold text-white text-base">-</h3>
+        <span id="lbl-role" class="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-2 py-0.5 rounded-full border border-blue-500/20 mt-1 inline-block">-</span>
+        <button onclick="bukaModalEditProfile()" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium px-2 py-0.5 rounded-full mt-1 ml-1 border border-slate-600 transition inline-block">
+          <i class="fa-solid fa-user-pen mr-1"></i>Edit Profil
+        </button>
+      </div>
+      <button onclick="prosesLogout()" class="text-slate-400 hover:text-red-400 p-2"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="bg-gradient-to-br from-emerald-600 to-teal-700 p-4 rounded-2xl border border-emerald-500/20">
+        <p class="text-[10px] uppercase tracking-wider text-emerald-200">Saldo Terakhir</p>
+        <p id="lbl-dashboard-saldo" class="text-base font-bold text-white mt-1">Rp 0</p>
+      </div>
+      <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-4 rounded-2xl border border-indigo-500/20">
+        <p class="text-[10px] uppercase tracking-wider text-indigo-200">Blok Aktif</p>
+        <p id="lbl-dashboard-blok" class="text-xl font-black text-white mt-1">0 <span class="text-xs font-normal">Blok</span></p>
+      </div>
+    </div>
+
+    <p class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2 px-1">Menu Utama Aplikasi</p>
+    <div class="grid grid-cols-1 gap-3">
+      <div id="btn-transaksi-main" onclick="bukaSubMenuTransaksi()" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-2xl border border-slate-700 cursor-pointer flex items-center space-x-4 transition">
+        <div class="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center"><i class="fa-solid fa-wallet text-lg"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">TRANSAKSI</h4><p class="text-xs text-slate-400">Pencatatan Iuran, Penerimaan & Pengeluaran</p></div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </div>
+      <div id="btn-laporan-main" onclick="bukaSubMenuLaporan()" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-2xl border border-slate-700 cursor-pointer flex items-center space-x-4 transition">
+        <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center"><i class="fa-solid fa-chart-line text-lg"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">LAPORAN</h4><p class="text-xs text-slate-400">Rekapitulasi Keuangan & Monitoring Tunggakan</p></div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </div>
+      <div id="btn-pengaturan-main" onclick="bukaSubMenuPengaturan()" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-2xl border border-slate-700 cursor-pointer flex items-center space-x-4 transition hidden">
+        <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center"><i class="fa-solid fa-sliders text-lg"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">PENGATURAN</h4><p class="text-xs text-slate-400">Master Data Perumahan & Kunci Periode</p></div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </div>
+    </div>
+  </div>
+<div id="form-submenu-transaksi" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <button onclick="kembaliKeDashboardUtama()" class="mb-4 bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700 flex items-center space-x-1">
+      <i class="fa-solid fa-arrow-left"></i> <span>Kembali ke Dashboard</span>
+    </button>
+    <p class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2 px-1">Pilih Formulir Transaksi</p>
+    <div class="space-y-3">
+      <div onclick="bukaWorkspaceTransaksi('Iuran')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-invoice"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">1. Transaksi Iuran Warga</h4><p class="text-xs text-slate-400">Pembayaran bulanan wajib & rutin</p></div>
+      </div>
+      <div onclick="bukaWorkspaceTransaksi('Penerimaan')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">2. Transaksi Penerimaan</h4><p class="text-xs text-slate-400">Kas masuk non-rutin & sukarela</p></div>
+      </div>
+      <div onclick="bukaWorkspaceTransaksi('Pengeluaran')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-money-bill-wave"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">3. Transaksi Pengeluaran</h4><p class="text-xs text-slate-400">Biaya operasional & pengeluaran kas</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="form-submenu-pengaturan" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <button onclick="kembaliKeDashboardUtama()" class="mb-4 bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700 flex items-center space-x-1">
+      <i class="fa-solid fa-arrow-left"></i> <span>Kembali ke Dashboard</span>
+    </button>
+    <p class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2 px-1">Pilih Pengaturan Master</p>
+    <div class="space-y-3">
+      <div onclick="bukaWorkspaceMaster('Blok')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-map-location-dot"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">Master Blok Rumah Warga</h4><p class="text-xs text-slate-400">Atur nomor urut blok hunian & masa tinggal</p></div>
+      </div>
+      <div onclick="bukaWorkspaceMaster('Iuran')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-list-check"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">Master Kategori Iuran</h4><p class="text-xs text-slate-400">Atur jenis iuran warga & nominal rupiah</p></div>
+      </div>
+      <div onclick="bukaWorkspaceMaster('Pengeluaran')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-tags"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">Master Nama Pengeluaran</h4><p class="text-xs text-slate-400">Atur pos alokasi pengeluaran kas perumahan</p></div>
+      </div>
+      <div id="btn-master-user" onclick="bukaWorkspaceMaster('User')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4 hidden">
+        <div class="w-10 h-10 bg-purple-500/10 text-purple-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-users-gear"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">Master Pengurus & User (Admin)</h4><p class="text-xs text-slate-400">Kelola akun kredensial login & tingkat hak akses</p></div>
+      </div>
+      <div id="btn-master-kunci" onclick="bukaWorkspaceMaster('Kunci')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4 hidden">
+        <div class="w-10 h-10 bg-red-500/10 text-red-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-lock text-lg"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">Master Gembok Periode (Keuangan)</h4><p class="text-xs text-slate-400">Kunci bulan laporan transaksi kas warga</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="form-submenu-laporan" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <button onclick="kembaliKeDashboardUtama()" class="mb-4 bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700 flex items-center space-x-1">
+      <i class="fa-solid fa-arrow-left"></i> <span>Kembali ke Dashboard</span>
+    </button>
+    <p class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2 px-1">Pilih Jenis Laporan</p>
+    <div class="space-y-3">
+      <div onclick="bukaWorkspaceLaporan('tunggakan')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-red-500/10 text-red-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-user-clock"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">1. Laporan Tunggakan Warga</h4><p class="text-xs text-slate-400">Daftar rekapitulasi tunggakan bulan bolong</p></div>
+      </div>
+      <div onclick="bukaWorkspaceLaporan('aging')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">2. Laporan Umur Piutang (Aging)</h4><p class="text-xs text-slate-400">Pemantauan tunggakan per ember rupiah durasi hari</p></div>
+      </div>
+      <div onclick="bukaWorkspaceLaporan('keuangan')" class="bg-slate-800 hover:bg-slate-750 p-4 rounded-xl border border-slate-700 cursor-pointer flex items-center space-x-4">
+        <div class="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div class="flex-1"><h4 class="font-bold text-white text-sm">3. Laporan Keuangan Bulanan</h4><p class="text-xs text-slate-400">Rekapitulasi total Saldo Lalu, Penerimaan & Pengeluaran</p></div>
+      </div>
+    </div>
+  </div>
+<div id="form-laporan-workspace" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <button onclick="kembaliKeSubLaporan()" class="mb-3 bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700 flex items-center space-x-1">
+      <i class="fa-solid fa-arrow-left"></i> <span>Pilihan Laporan</span>
+    </button>
+
+    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 id="txt-laporan-title" class="text-sm font-bold uppercase text-white tracking-wider">-</h3>
+        <span id="lbl-total-laporan" class="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-2 py-0.5 rounded-full border border-blue-500/20">0 Record</span>
+      </div>
+      
+      <div id="box-laporan-search-blok" class="mb-3 hidden">
+        <input type="text" id="laporan-grid-search" oninput="renderLaporanGridKeLayar()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" placeholder="Cari Kode Blok...">
+      </div>
+
+      <div id="box-laporan-periode-filter" class="mb-3 flex items-center space-x-2 hidden">
+        <div class="flex-1">
+          <input type="month" id="lap-keuangan-periode" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <button onclick="pemicuMuatLaporanKeuangan()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-md">Tampilkan</button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead id="tbl-laporan-head">
+          </thead>
+          <tbody id="laporan-grid-body">
+          </tbody>
+        </table>
+      </div>
+
+      <div id="box-laporan-pagination" class="flex items-center justify-between mt-4 pt-2 border-t border-slate-700 text-[11px] text-slate-400">
+        <span id="laporan-grid-info">Hal 1 dari 1</span>
+        <div class="flex space-x-1">
+          <button onclick="navigasiHalamanLaporanGrid(-1)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Prev</button>
+          <button onclick="navigasiHalamanLaporanGrid(1)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-tunggakan" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[80vh]">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-700 mb-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-folder-open text-amber-400"></i>
+          <span>Detail Tunggakan Blok <span id="mdl-tunggakan-blok" class="text-blue-400">-</span></span>
+        </h3>
+        <button onclick="tutupModalDetailTunggakan()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <p class="text-xs text-slate-400 mb-3">Daftar periode (Tahun-Bulan) yang belum teridentifikasi pembayarannya di sistem:</p>
+      <div id="mdl-tunggakan-list" class="flex-1 overflow-y-auto grid grid-cols-2 gap-1.5 p-1 bg-slate-900 border border-slate-700 rounded-xl max-h-48 text-center text-xs font-mono">
+      </div>
+      <div class="mt-4 pt-2 border-t border-slate-700 flex justify-end">
+        <button onclick="tutupModalDetailTunggakan()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition">Tutup Jendela</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-edit-profile" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-700 mb-4">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-user-gear text-blue-400"></i>
+          <span>Edit Profil Saya</span>
+        </h3>
+        <button onclick="tutupModalEditProfile()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-3 text-left">
+        <div>
+          <label class="block text-[11px] text-slate-400 font-medium mb-1">Nama Lengkap Baru</label>
+          <input type="text" id="prof-nama" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-400 font-medium mb-1">Username Baru</label>
+          <input type="text" id="prof-username" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-400 font-medium mb-1">Password Baru</label>
+          <input type="text" id="prof-password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <button onclick="eksekusiUpdateProfile()" id="btn-simpan-profile" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 rounded-xl transition mt-4">UPDATE PROFIL</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-keuangan" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col max-h-[80vh]">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-700 mb-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-list-check text-emerald-400"></i>
+          <span>Rincian Item: <span id="mdl-keuangan-kategori" class="text-blue-400">-</span></span>
+        </h3>
+        <button onclick="tutupModalDetailKeuangan()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="overflow-x-auto flex-1 bg-slate-900 border border-slate-700 rounded-xl p-1 max-h-60">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400 font-mono">
+              <th class="py-2 px-2 text-center w-8">No</th>
+              <th class="py-2 px-2">No Bukti</th>
+              <th class="py-2 px-2">Keterangan/Blok</th>
+              <th class="py-2 px-2 text-right">Rupiah</th>
+            </tr>
+          </thead>
+          <tbody id="mdl-keuangan-body">
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4 pt-2 border-t border-slate-700 flex justify-end">
+        <button onclick="tutupModalDetailKeuangan()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-1.5 px-4 rounded-xl text-xs transition">Tutup Jendela</button>
+      </div>
+    </div>
+  </div>
+<div id="form-transaksi-workspace" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <button onclick="kembaliKeSubTransaksi()" class="mb-3 bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700 flex items-center space-x-1">
+      <i class="fa-solid fa-arrow-left"></i> <span>Kembali ke Pilihan Transaksi</span>
+    </button>
+    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl mb-4">
+      <h2 id="txt-workspace-title" class="text-base font-bold text-white mb-4">-</h2>
+      
+      <div id="wrapper-input-transaksi" class="space-y-3 text-left">
+        <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Tanggal Transaksi</label><input type="date" id="ins-tanggal" onchange="muatGridSistem()" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+        <div id="box-wrapper-blok" class="hidden relative"><label class="block text-[11px] text-slate-400 font-medium mb-1">Pilih Blok Warga</label><input type="text" id="ins-blok-search" oninput="filterDropdownBlok()" onfocus="bukaDropdownBlok()" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Ketik kode blok..."><div id="dropdown-blok-list" class="absolute w-full bg-slate-800 border border-slate-700 rounded-xl mt-1 max-h-32 overflow-y-auto z-10 hidden shadow-xl"></div></div>
+        <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Kategori / Jenis</label><select id="ins-kategori" onchange="logikaKategoriBerubah()" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></select></div>
+        <div id="box-wrapper-multi-periode" class="grid grid-cols-2 gap-2 hidden">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Bulan Awal</label><input type="month" id="ins-periode-awal" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Bulan Akhir</label><input type="month" id="ins-periode-akhir" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+        </div>
+        <div id="box-wrapper-deskripsi"><label class="block text-[11px] text-slate-400 font-medium mb-1">Keterangan / Deskripsi</label><input type="text" id="ins-deskripsi" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Catatan tambahan"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Nominal (Rupiah)</label><input type="number" id="ins-nominal" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Metode Bayar</label><select id="ins-metode" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"><option value="Tunai">Tunai</option><option value="Transfer">Transfer</option></select></div>
+        </div>
+        <div id="box-wrapper-dana" class="hidden">
+          <label class="block text-[11px] text-slate-400 font-medium mb-1">Sumber Dana</label>
+          <select id="ins-dana" class="nav-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </select>
+        </div>
+        <button onclick="eksekusiSimpanData()" id="btn-simpan-transaksi" class="nav-input w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 rounded-xl transition mt-3">SIMPAN TRANSAKSI</button>
+      </div>
+    </div>
+    
+    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl">
+      <div class="flex items-center justify-between mb-2"><h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Histori Transaksi</h3><input type="text" id="grid-search" oninput="renderDataGridKeLayar()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white w-1/2 focus:outline-none focus:border-blue-500" placeholder="Cari deskripsi..."></div>
+      <div class="overflow-x-auto"><table class="w-full text-left text-xs border-collapse"><thead><tr class="border-b border-slate-700 text-slate-400"><th class="py-2 px-1 text-center w-8">No</th><th class="py-2 px-1">No Bukti</th><th class="py-2 px-1">Deskripsi</th><th class="py-2 px-1 text-right">Rupiah</th><th class="py-2 px-1 text-center w-14">Aksi</th></tr></thead><tbody id="grid-body-data"></tbody></table></div>
+      <div class="flex items-center justify-between mt-3 pt-2 border-t border-slate-700 text-[11px] text-slate-400"><span id="grid-info-page">Hal 1 dari 1</span><div class="flex space-x-1"><button onclick="navigasiHalamanGrid(-1)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Prev</button><button onclick="navigasiHalamanGrid(1)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Next</button></div></div>
+    </div>
+  </div>
+
+  <div id="form-master-workspace" class="flex-1 w-full max-w-md mx-auto p-4 hidden">
+    <button onclick="kembaliKeSubFormMaster()" class="mb-3 bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-700 flex items-center space-x-1">
+      <i class="fa-solid fa-arrow-left"></i> <span>Pilihan Master</span>
+    </button>
+    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl mb-4">
+      <h2 id="txt-master-title" class="text-base font-bold text-white mb-4">-</h2>
+      
+      <div id="wrapper-input-master" class="space-y-3 text-left">
+        <div id="wp-m-blok" class="space-y-3 hidden">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Nama Blok Rumah</label><input type="text" id="m-blok-nama" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Contoh: A.01"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Tanggal Mulai Hunian</label><input type="date" id="m-blok-mulai" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+        </div>
+
+        <div id="wp-m-iuran" class="space-y-3 hidden">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Nama Jenis Iuran</label><input type="text" id="m-iuran-jenis" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Contoh: Kebersihan"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Nominal Rupiah Tarif</label><input type="number" id="m-iuran-rupiah" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Sifat Jenis Pembayaran</label>
+            <div class="flex items-center space-x-4 mt-1 bg-slate-900 p-2 rounded-xl border border-slate-700">
+              <label class="flex items-center text-xs text-white cursor-pointer"><input type="radio" name="m-iuran-rutin" value="1" checked class="mr-2 accent-blue-500"> Wajib/Rutin Bulanan</label>
+              <label class="flex items-center text-xs text-white cursor-pointer"><input type="radio" name="m-iuran-rutin" value="0" class="mr-2 accent-blue-500"> Sukarela/Non-Rutin</label>
+            </div>
+          </div>
+        </div>
+
+        <div id="wp-m-keluar" class="space-y-3 hidden">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Nama Alokasi Pengeluaran</label><input type="text" id="m-keluar-nama" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Contoh: Gaji Satpam"></div>
+        </div>
+
+        <div id="wp-m-user" class="space-y-3 hidden">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">ID Username Login</label><input type="text" id="m-user-uid" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Password Akses</label><input type="text" id="m-user-pwd" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Nama Pengguna Real</label><input type="text" id="m-user-nama" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium   mb-1">Role Tingkat Otoritas</label>
+            <select id="m-user-role" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+              </select>
+          </div>
+        </div>
+
+        <div id="wp-m-kunci" class="space-y-3 hidden">
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Pilih Bulan & Tahun Periode</label><input type="month" id="m-kunci-bulan" class="nav-input-m w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-[11px] text-slate-400 font-medium mb-1">Status Kunci Laporan</label>
+            <div class="flex items-center space-x-4 mt-1 bg-slate-900 p-2 rounded-xl border border-slate-700">
+              <label class="flex items-center text-xs text-white cursor-pointer"><input type="radio" name="m-kunci-status" value="1" checked class="mr-2 accent-red-500"> Kunci Total (1)</label>
+              <label class="flex items-center text-xs text-white cursor-pointer"><input type="radio" name="m-kunci-status" value="0" class="mr-2 accent-green-500"> Buka Akses (0)</label>
+            </div>
+          </div>
+        </div>
+        <button onclick="eksekusiSimpanMaster()" id="btn-simpan-master" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 rounded-xl transition mt-3">SIMPAN DATA MASTER</button>
+      </div>
+    </div>
+
+    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Daftar Riwayat Master</h3>
+        <input type="text" id="master-grid-search" oninput="renderMasterGridKeLayar()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white w-1/2 focus:outline-none focus:border-blue-500" placeholder="Cari data...">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400">
+              <th id="th-m-col1" class="py-2 px-1">Nama/Jenis</th>
+              <th id="th-m-col2" class="py-2 px-1">Atribut 1</th>
+              <th id="th-m-col3" class="py-2 px-1">Atribut 2</th>
+              <th class="py-2 px-1 text-center w-20">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="master-grid-body"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between mt-3 pt-2 border-t border-slate-700 text-[11px] text-slate-400">
+        <span id="master-grid-info">Hal 1 dari 1</span>
+        <div class="flex space-x-1">
+          <button onclick="navigasiHalamanMasterGrid(-1)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Prev</button>
+          <button onclick="navigasiHalamanMasterGrid(1)" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="w-full text-center py-3 text-[10px] text-slate-600 tracking-wide">Puri FinC 17 V.0.0 &bull; Versi 0.1.0 (Power By PWA Edition)</footer>
+<script>
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbybMnFMly_OuhU-9RsPy0wJpCoLNr8JstNJkEZ_BKM6bPHoHnq4H53IlZfHn2JvU5UL2Q/exec";
+
+    let sessionToken = '';
+    let sessionUser = { nama: '', role: '', username: '' };
+    let sessionAkses = { trans: 0, lap: 0, mstData: 0, mstUser: 0, mstKunci: 0 };
+    let masterDatabase = { blok: [], iuranRutin: [], iuranSukarela: [], keluar: [], dana: [], batasTanggal: '', saldoTerakhir: 0 };
+
+    let currentWorkspace = ''; 
+    let currentMasterWorkspace = ''; 
+    let currentLaporanWorkspace = ''; 
+
+    let rawGridData = [];      
+    let rawMasterGridData = [];
+    let rawLaporanGridData = []; 
+    let globalDetailKeuanganRaw = {}; 
+
+    let gridCurrentPage = 1;
+    let masterGridCurrentPage = 1;
+    let laporanGridCurrentPage = 1;
+
+    let pendingAksiData = { type: '', idIndex: null };
+    let editMasterRowId = null;
+
+    /**
+     * Mesin Utama API Fetching - Pengganti google.script.run
+     * Mengirim data ke GAS dengan metode POST tanpa memicu preflight CORS
+     */
+    async function callAPI(fungsi, args = {}) {
+      try {
+        const payload = {
+          fungsi: fungsi,
+          token: sessionToken, 
+          args: args
+        };
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("API Fetch Error:", error);
+        return { sukses: false, pesan: "Gagal terhubung ke server cloud: " + error.message };
+      }
+    }
+
+    window.onload = function() { 
+      setupNavigasiEnterKey(); 
+      setupNavigasiMasterEnterKey();
+    };
+
+    function setupNavigasiEnterKey() {
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          if (e.target.classList.contains('nav-input')) {
+            e.preventDefault();
+            const elemenNav = Array.from(document.querySelectorAll('.nav-input:not([disabled])'));
+            const indexIndex = elemenNav.indexOf(e.target);
+            if (indexIndex > -1 && indexIndex + 1 < elemenNav.length) { elemenNav[indexIndex + 1].focus(); }
+          }
+        }
+      });
+    }
+
+    function setupNavigasiMasterEnterKey() {
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.classList.contains('nav-input-m')) {
+          e.preventDefault();
+          const el = Array.from(document.querySelectorAll('.nav-input-m:not([disabled])'));
+          const idx = el.indexOf(e.target);
+          if (idx > -1 && idx + 1 < el.length) el[idx + 1].focus();
+        }
+      });
+    }
+
+    function tampilkanMsgBox(judul, teks, tipe) {
+      document.getElementById('msg-title').innerText = judul;
+      document.getElementById('msg-text').innerText = teks;
+      const iconBox = document.getElementById('msg-icon');
+      if(tipe === 'sukses') {
+        iconBox.className = "w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        iconBox.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+      } else {
+        iconBox.className = "w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-xl bg-red-500/10 text-red-400 border border-red-500/20";
+        iconBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+      }
+      document.getElementById('custom-msgbox').classList.remove('hidden');
+    }
+
+    function tutupMsgBox() { document.getElementById('custom-msgbox').classList.add('hidden'); }
+
+    function panggilConfirmBoxCustom(actionType, idIndex) {
+      pendingAksiData.type = actionType;
+      pendingAksiData.idIndex = idIndex;
+      document.getElementById('confirm-text').innerText = actionType.startsWith('master-hapus') ? "Apakah anda yakin ingin menonaktifkan baris master data ini?" : "Apakah anda yakin ingin menghapus data transaksi ini?";
+      document.getElementById('custom-confirmbox').classList.remove('hidden');
+    }
+
+    function tutupConfirmBox(isYakin) {
+      document.getElementById('custom-confirmbox').classList.add('hidden');
+      if(isYakin && pendingAksiData.idIndex !== null) { 
+        if(pendingAksiData.type === 'transaksi-hapus') jalankanProsesHapusData(pendingAksiData.idIndex); 
+        if(pendingAksiData.type === 'master-hapus') jalankanProsesHapusMaster(pendingAksiData.idIndex);
+      }
+      pendingAksiData = { type: '', idIndex: null };
+    }
+
+    function togglePassword() {
+      const p = document.getElementById('txt-password');
+      const e = document.getElementById('eye-icon');
+      if (p.type === 'password') { p.type = 'text'; e.className = 'fa-solid fa-eye-slash'; }
+      else { p.type = 'password'; e.className = 'fa-solid fa-eye'; }
+    }
+
+    function kembaliKeDashboardUtama() {
+      document.getElementById('form-submenu-transaksi').classList.add('hidden');
+      document.getElementById('form-submenu-pengaturan').classList.add('hidden');
+      document.getElementById('form-submenu-laporan').classList.add('hidden'); 
+      document.getElementById('form-laporan-workspace').classList.add('hidden');
+      document.getElementById('form-transaksi-workspace').classList.add('hidden');
+      document.getElementById('form-master-workspace').classList.add('hidden');
+      document.getElementById('form-menu').classList.remove('hidden');
+    }
+
+    async function prosesLogin() {
+      const u = document.getElementById('txt-username').value;
+      const p = document.getElementById('txt-password').value;
+      if(!u || !p) return tampilkanMsgBox("Peringatan", "Username dan Password wajib diisi.", "gagal");
+
+      document.getElementById('btn-login').disabled = true;
+      document.getElementById('btn-login').innerText = "MEMVALIDASI DATABASE...";
+
+      const res = await callAPI('checkLogin', { username: u, password: p });
+
+      if(res.sukses) {
+        sessionToken = res.token;
+
+        sessionUser.nama = res.nama; 
+        sessionUser.role = res.role;
+        sessionUser.username = u;
+        document.getElementById('lbl-nama').innerText = res.nama;
+        document.getElementById('lbl-role').innerText = res.role;
+        
+        sessionAkses = res.matriksAkses;
+
+        document.getElementById('btn-transaksi-main').classList.toggle('hidden', sessionAkses.trans === 0);
+        document.getElementById('btn-laporan-main').classList.toggle('hidden', sessionAkses.lap === 0);
+        document.getElementById('btn-pengaturan-main').classList.toggle('hidden', sessionAkses.mstData === 0);
+        document.getElementById('btn-master-user').classList.toggle('hidden', sessionAkses.mstUser === 0);
+        document.getElementById('btn-master-kunci').classList.toggle('hidden', sessionAkses.mstKunci === 0);
+
+        masterDatabase = res.master;
+        
+        if (res.master.blok) {
+          document.getElementById('lbl-dashboard-blok').innerHTML = res.master.blok.length + ' <span class="text-xs font-normal">Blok</span>';
+        }
+        if (res.master.saldoTerakhir !== undefined) {
+          document.getElementById('lbl-dashboard-saldo').innerText = 'Rp ' + Number(res.master.saldoTerakhir).toLocaleString('id-ID');
+        }
+
+        document.getElementById('form-login').classList.add('hidden');
+        document.getElementById('form-menu').classList.remove('hidden');
+      } else {
+        document.getElementById('btn-login').disabled = false;
+        document.getElementById('btn-login').innerText = "LOG IN";
+        tampilkanMsgBox("Gagal", res.pesan, "gagal");
+      }
+    }
+
+    function prosesLogout() {
+      sessionToken = '';
+
+      const btnLogin = document.getElementById('btn-login'); if (btnLogin) { btnLogin.disabled = false; btnLogin.innerText = "LOG IN"; }
+      document.getElementById('txt-username').value = ''; document.getElementById('txt-password').value = '';
+      
+      document.getElementById('form-menu').classList.add('hidden'); document.getElementById('form-submenu-transaksi').classList.add('hidden');
+      document.getElementById('form-submenu-pengaturan').classList.add('hidden'); document.getElementById('form-master-workspace').classList.add('hidden');
+      document.getElementById('form-transaksi-workspace').classList.add('hidden'); document.getElementById('form-submenu-laporan').classList.add('hidden');
+      document.getElementById('form-laporan-workspace').classList.add('hidden'); document.getElementById('form-login').classList.remove('hidden');
+    }
+
+    function bukaSubMenuLaporan() {
+      document.getElementById('form-menu').classList.add('hidden');
+      document.getElementById('form-submenu-laporan').classList.remove('hidden');
+    }
+
+    function kembaliKeSubLaporan() {
+      document.getElementById('form-laporan-workspace').classList.add('hidden');
+      document.getElementById('form-submenu-laporan').classList.remove('hidden');
+    }
+
+    async function bukaWorkspaceLaporan(jenisLaporan) {
+      currentLaporanWorkspace = jenisLaporan;
+      document.getElementById('laporan-grid-search').value = '';
+      
+      const boxSearch = document.getElementById('box-laporan-search-blok');
+      const boxPeriode = document.getElementById('box-laporan-periode-filter');
+      const boxPagination = document.getElementById('box-laporan-pagination');
+      const thead = document.getElementById('tbl-laporan-head');
+      const tbody = document.getElementById('laporan-grid-body');
+      
+      tbody.innerHTML = '';
+
+      if (jenisLaporan === 'keuangan') {
+        document.getElementById('txt-laporan-title').innerText = "Laporan Arus Keuangan Bulanan";
+        boxSearch.classList.add('hidden');
+        boxPeriode.classList.remove('hidden');
+        boxPagination.classList.add('hidden');
+        document.getElementById('lbl-total-laporan').innerText = "Arus Kas";
+        
+        thead.innerHTML = `<tr class="border-b border-slate-700 text-slate-400"><th class="py-2 px-1 text-center w-8">No</th><th class="py-2 px-1">Deskripsi Pos Laporan</th><th class="py-2 px-1 text-right w-32">Rupiah</th><th class="py-2 px-1 text-center w-14">Aksi</th></tr>`;
+        document.getElementById('lap-keuangan-periode').value = new Date().toISOString().substring(0, 7);
+      } else {
+        boxSearch.classList.remove('hidden');
+        boxPeriode.classList.add('hidden');
+        boxPagination.classList.remove('hidden');
+        
+        const titleText = jenisLaporan === 'tunggakan' ? "Laporan Tunggakan Warga (Bulan Bolong)" : "Laporan Umur Piutang (Aging Arrears)";
+        document.getElementById('txt-laporan-title').innerText = titleText;
+        
+        if(jenisLaporan === 'tunggakan') {
+          thead.innerHTML = `<tr class="border-b border-slate-700 text-slate-400"><th class="py-2 px-1 text-center w-8">No</th><th class="py-2 px-1">Blok</th><th class="py-2 px-1">Durasi Total</th><th class="py-2 px-1 text-center w-14">Aksi</th></tr>`;
+        } else {
+          thead.innerHTML = `
+            <tr class="border-b border-slate-700 text-slate-400">
+              <th class="py-2 px-1 text-center w-8">No</th>
+              <th class="py-2 px-1">Blok</th>
+              <th class="py-2 px-1 text-right w-28 text-indigo-400">Total Piutang</th>
+              <th class="py-2 px-1 text-right">&lt;30H</th>
+              <th class="py-2 px-1 text-right">31-90H</th>
+              <th class="py-2 px-1 text-right">91-365H</th>
+              <th class="py-2 px-1 text-right">&gt;365H</th>
+            </tr>`;
+        }
+        await muatLaporanGridSistem();
+      }
+      
+      document.getElementById('form-submenu-laporan').classList.add('hidden');
+      document.getElementById('form-laporan-workspace').classList.remove('hidden');
+    }
+
+    async function muatLaporanGridSistem() {
+      document.getElementById('laporan-grid-body').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengkalkulasi data langsung dari cloud...</td></tr>';
+      
+      const res = await callAPI('getLaporanSistem', { jenisLaporan: currentLaporanWorkspace });
+      
+      if(res.sukses) {
+        rawLaporanGridData = res.data;
+        document.getElementById('lbl-total-laporan').innerText = res.total_records + " Record";
+        laporanGridCurrentPage = 1;
+        renderLaporanGridKeLayar();
+      } else { 
+        tampilkanMsgBox("Gagal", res.pesan, "gagal"); 
+      }
+    }
+
+    function renderLaporanGridKeLayar() {
+      const kw = document.getElementById('laporan-grid-search').value.toUpperCase();
+      const tbody = document.getElementById('laporan-grid-body');
+      tbody.innerHTML = '';
+      
+      let saring = rawLaporanGridData.filter(d => d.blok.toUpperCase().includes(kw));
+      if(!saring.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-500">Tidak ada data laporan yang cocok.</td></tr>`;
+        document.getElementById('laporan-grid-info').innerText = "Hal 1 dari 1"; return;
+      }
+    
+      const totalHalaman = Math.ceil(saring.length / 10);
+      if(laporanGridCurrentPage > totalHalaman) laporanGridCurrentPage = totalHalaman;
+      const start = (laporanGridCurrentPage - 1) * 10;
+      const halamanData = saring.slice(start, start + 10);
+    
+      let globalTotSemua = 0, globalTotBaru = 0, globalTotRingan = 0, globalTotSedang = 0, globalTotMacet = 0;
+      if (currentLaporanWorkspace === 'aging') {
+        saring.forEach(d => {
+          let t = parseInt(d.total_piutang.replace(/[^\d]/g, '')) || 0;
+          let b = parseInt(d.keadaan_baru.replace(/[^\d]/g, '')) || 0;
+          let r = parseInt(d.keadaan_ringan.replace(/[^\d]/g, '')) || 0;
+          let s = parseInt(d.keadaan_sedang.replace(/[^\d]/g, '')) || 0;
+          let m = parseInt(d.keadaan_macet.replace(/[^\d]/g, '')) || 0;
+          globalTotBaru += b; globalTotRingan += r; globalTotSedang += s; globalTotMacet += m;
+          globalTotSemua += t;
+        });
+      }
+
+      halamanData.forEach((d, idx) => {
+        const noUrut = start + idx + 1;
+        let rowHtml = `<tr class="border-b border-slate-800 hover:bg-slate-750 text-slate-300"><td class="py-2 px-1 text-center">${noUrut}</td><td class="py-2 px-1 font-bold text-white">${d.blok}</td>`;
+        
+        if(currentLaporanWorkspace === 'tunggakan') {
+          rowHtml += `
+            <td class="py-2 px-1 text-red-400 font-medium">${d.durasi_tunggakan}</td>
+            <td class="py-2 px-1 text-center">
+              <button onclick="pemicuMuatDetailTunggakan('${d.blok}')" class="text-blue-400 hover:text-blue-300 p-1" title="Lihat Daftar Bulan"><i class="fa-solid fa-eye text-sm"></i></button>
+            </td>
+          `;
+        } else {
+          rowHtml += `
+            <td class="py-2 px-1 text-right text-white font-bold font-mono bg-indigo-500/5">${d.total_piutang}</td>
+            <td class="py-2 px-1 text-right text-emerald-400 font-mono">${d.keadaan_baru}</td>
+            <td class="py-2 px-1 text-right text-amber-400 font-mono">${d.keadaan_ringan}</td>
+            <td class="py-2 px-1 text-right text-orange-400 font-mono">${d.keadaan_sedang}</td>
+            <td class="py-2 px-1 text-right text-red-500 font-bold font-mono">${d.keadaan_macet}</td>
+          `;
+        }
+        rowHtml += `</tr>`;
+        tbody.innerHTML += rowHtml;
+      });
+
+      if(currentLaporanWorkspace === 'aging') {
+        tbody.innerHTML += `
+          <tr class="bg-slate-800/80 border-t-2 border-slate-700 font-bold text-white text-xs">
+            <td class="py-2.5 px-1 text-center text-slate-500"><i class="fa-solid fa-calculator"></i></td>
+            <td class="py-2.5 px-1 uppercase tracking-wider text-indigo-400">TOTAL PIUTANG</td>
+            <td class="py-2.5 px-1 text-right font-mono text-yellow-400 bg-indigo-500/10">Rp ${globalTotSemua.toLocaleString('id-ID')}</td>
+            <td class="py-2.5 px-1 text-right font-mono text-emerald-400">Rp ${globalTotBaru.toLocaleString('id-ID')}</td>
+            <td class="py-2.5 px-1 text-right font-mono text-amber-400">Rp ${globalTotRingan.toLocaleString('id-ID')}</td>
+            <td class="py-2.5 px-1 text-right font-mono text-orange-400">Rp ${globalTotSedang.toLocaleString('id-ID')}</td>
+            <td class="py-2.5 px-1 text-right font-mono text-red-500 bg-red-500/5">Rp ${globalTotMacet.toLocaleString('id-ID')}</td>
+          </tr>
+        `;
+      }
+      document.getElementById('laporan-grid-info').innerText = `Hal ${laporanGridCurrentPage} dari ${totalHalaman}`;
+    }
+
+    function navigasiHalamanLaporanGrid(arah) {
+      laporanGridCurrentPage += arah; if(laporanGridCurrentPage < 1) laporanGridCurrentPage = 1; renderLaporanGridKeLayar();
+    }
+
+    async function pemicuMuatDetailTunggakan(blok) {
+      document.getElementById('mdl-tunggakan-blok').innerText = blok;
+      const containerList = document.getElementById('mdl-tunggakan-list');
+      
+      containerList.innerHTML = '<span class="col-span-2 py-4 text-slate-500 text-xs"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat daftar periode...</span>';
+      document.getElementById('modal-detail-tunggakan').classList.remove('hidden');
+
+      const res = await callAPI('getDetailTunggakanBlok', { blok });
+      
+      if (res.sukses) {
+        containerList.innerHTML = '';
+        if (res.data.length === 0) {
+          containerList.innerHTML = '<span class="col-span-2 py-2 text-slate-500">Tidak ada periode tunggakan.</span>';
+        } else {
+          res.data.forEach(periode => {
+            containerList.innerHTML += `<div class="bg-slate-800 border border-slate-700 text-red-400 py-1.5 rounded-lg shadow-sm font-mono text-[11px] font-bold tracking-wide">${periode}</div>`;
+          });
+        }
+      } else {
+        tampilkanMsgBox("Gagal", res.pesan, "gagal");
+      }
+    }
+
+    async function pemicuMuatLaporanKeuangan() {
+      const periode = document.getElementById('lap-keuangan-periode').value;
+      if(!periode) return tampilkanMsgBox("Peringatan", "Silakan pilih bulan periode terlebih dahulu.", "gagal");
+      
+      const tbody = document.getElementById('laporan-grid-body');
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengkalkulasi buku besar kas...</td></tr>';
+      
+      const res = await callAPI('getLaporanKeuanganSistem', { periodeTarget: periode });
+      
+      if(!res.sukses) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-400 font-semibold">${res.pesan}</td></tr>`;
+        return tampilkanMsgBox("Ditolak", res.pesan, "gagal");
+      }
+      
+      tbody.innerHTML = '';
+      globalDetailKeuanganRaw = {}; 
+      let lineNo = 1;
+      
+      tbody.innerHTML += `
+        <tr class="border-b border-slate-800 hover:bg-slate-750 text-slate-300">
+          <td class="py-2.5 px-1 text-center font-mono">${lineNo++}</td>
+          <td class="py-2.5 px-1 pl-2 font-medium">Saldo Lalu (Kumulatif / Checkpoint Snapshot)</td>
+          <td class="py-2.5 px-1 text-right font-mono text-slate-400">Rp ${res.saldoLalu.toLocaleString('id-ID')}</td>
+          <td class="py-2.5 px-1 text-center text-slate-600">-</td>
+        </tr>
+      `;
+      
+      tbody.innerHTML += `
+        <tr class="bg-emerald-950/20 text-emerald-400 font-bold border-b border-slate-800 text-xs">
+          <td class="py-2 px-1 text-center font-mono">${lineNo++}</td>
+          <td class="py-2 px-1 uppercase tracking-wider">PENERIMAAN KAS BULAN INI</td>
+          <td></td><td></td>
+        </tr>
+      `;
+      
+      if(res.penerimaan.length === 0) {
+        tbody.innerHTML += `<tr class="border-b border-slate-800 text-slate-500 italic"><td class="py-1.5 px-1"></td><td class="py-1.5 px-5 text-xs">Belum ada item kas masuk</td><td></td><td></td></tr>`;
+      } else {
+        res.penerimaan.forEach((item, index) => {
+          const memKey = 'pen_' + index;
+          globalDetailKeuanganRaw[memKey] = item.detail_raw;
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-800 hover:bg-slate-750 text-slate-300 text-xs">
+              <td></td>
+              <td class="py-2 px-6 text-slate-400">&bull; ${item.nama}</td>
+              <td class="py-2 px-1 text-right font-mono text-emerald-400">Rp ${item.nominal.toLocaleString('id-ID')}</td>
+              <td class="py-2 px-1 text-center">
+                <button onclick="bukaModalDetailKeuangan('${item.nama}', '${memKey}')" class="text-blue-400 hover:text-blue-300 p-1"><i class="fa-solid fa-eye text-xs"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+      
+      tbody.innerHTML += `
+        <tr class="border-b-2 border-slate-700 bg-slate-800/40 text-slate-200 text-xs font-semibold">
+          <td></td>
+          <td class="py-2 px-4 text-right italic text-slate-500">Total Saldo Penerimaan (+)</td>
+          <td class="py-2 px-1 text-right font-mono text-emerald-400 border-t border-slate-700">Rp ${res.totalPenerimaan.toLocaleString('id-ID')}</td>
+          <td></td>
+        </tr>
+      `;
+      
+      tbody.innerHTML += `
+        <tr class="bg-red-950/20 text-red-400 font-bold border-b border-slate-800 text-xs">
+          <td class="py-2 px-1 text-center font-mono">${lineNo++}</td>
+          <td class="py-2 px-1 uppercase tracking-wider">PENGELUARAN KAS BULAN INI</td>
+          <td></td><td></td>
+        </tr>
+      `;
+      
+      if(res.pengeluaran.length === 0) {
+        tbody.innerHTML += `<tr class="border-b border-slate-800 text-slate-500 italic"><td class="py-1.5 px-1"></td><td class="py-1.5 px-5 text-xs">Belum ada item kas keluar</td><td></td><td></td></tr>`;
+      } else {
+        res.pengeluaran.forEach((item, index) => {
+          const memKey = 'klr_' + index;
+          globalDetailKeuanganRaw[memKey] = item.detail_raw;
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-800 hover:bg-slate-750 text-slate-300 text-xs">
+              <td></td>
+              <td class="py-2 px-6 text-slate-400">&bull; ${item.nama}</td>
+              <td class="py-2 px-1 text-right font-mono text-red-400">Rp ${item.nominal.toLocaleString('id-ID')}</td>
+              <td class="py-2 px-1 text-center">
+                <button onclick="bukaModalDetailKeuangan('${item.nama}', '${memKey}')" class="text-blue-400 hover:text-blue-300 p-1"><i class="fa-solid fa-eye text-xs"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+      
+      tbody.innerHTML += `
+        <tr class="border-b-2 border-slate-700 bg-slate-800/40 text-slate-200 text-xs font-semibold">
+          <td></td>
+          <td class="py-2 px-4 text-right italic text-slate-500">Total Saldo Pengeluaran (-)</td>
+          <td class="py-2 px-1 text-right font-mono text-red-400 border-t border-slate-700">Rp ${res.totalPengeluaran.toLocaleString('id-ID')}</td>
+          <td></td>
+        </tr>
+      `;
+      
+      tbody.innerHTML += `
+        <tr class="bg-gradient-to-r from-indigo-950/50 to-blue-950/50 border-b border-blue-500/30 text-white font-bold text-sm">
+          <td class="py-3 px-1 text-center font-mono">${lineNo++}</td>
+          <td class="py-3 px-2 text-blue-300">TOTAL SALDO SAAT INI (AKHIR)</td>
+          <td class="py-3 px-1 text-right font-mono text-yellow-400 bg-blue-500/10">Rp ${res.saldoSaatIni.toLocaleString('id-ID')}</td>
+          <td class="text-center text-xs text-blue-500"><i class="fa-solid fa-calculator"></i></td>
+        </tr>
+      `;
+    }
+
+    function bukaModalDetailKeuangan(kategori, memKey) {
+      document.getElementById('mdl-keuangan-kategori').innerText = kategori;
+      const tbodyMdl = document.getElementById('mdl-keuangan-body');
+      tbodyMdl.innerHTML = '';
+      
+      const rincianList = globalDetailKeuanganRaw[memKey] || [];
+      if(rincianList.length === 0) {
+        tbodyMdl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-500">Tidak ada rincian mutasi item.</td></tr>';
+      } else {
+        rincianList.forEach((row, idx) => {
+          tbodyMdl.innerHTML += `
+            <tr class="border-b border-slate-800 text-slate-300 text-[11px] hover:bg-slate-800/60 font-sans">
+              <td class="py-2 px-2 text-center text-slate-500 font-mono">${idx + 1}</td>
+              <td class="py-2 px-2 font-mono text-blue-400">${row.nobukti}</td>
+              <td class="py-2 px-2 text-slate-400">${row.deskripsi}</td>
+              <td class="py-2 px-2 text-right font-mono text-emerald-400">Rp ${row.rupiah.toLocaleString('id-ID')}</td>
+            </tr>
+          `;
+        });
+      }
+      document.getElementById('modal-detail-keuangan').classList.remove('hidden');
+    }
+
+    function tutupModalDetailKeuangan() { document.getElementById('modal-detail-keuangan').classList.add('hidden'); }
+
+    function bukaSubMenuPengaturan() {
+      document.getElementById('form-menu').classList.add('hidden');
+      document.getElementById('form-submenu-pengaturan').classList.remove('hidden');
+    }
+    
+    function kembaliKeSubFormMaster() {
+      document.getElementById('form-master-workspace').classList.add('hidden');
+      document.getElementById('form-submenu-pengaturan').classList.remove('hidden');
+    }
+
+    async function bukaWorkspaceMaster(jenisMaster) {
+      currentMasterWorkspace = jenisMaster; editMasterRowId = null;
+      document.getElementById('txt-master-title').innerText = "Pengaturan Master " + jenisMaster;
+      document.getElementById('btn-simpan-master').innerText = "SIMPAN DATA MASTER";
+      
+      document.getElementById('wp-m-blok').classList.add('hidden');
+      document.getElementById('wp-m-iuran').classList.add('hidden');
+      document.getElementById('wp-m-keluar').classList.add('hidden');
+      document.getElementById('wp-m-user').classList.add('hidden');
+      document.getElementById('wp-m-kunci').classList.add('hidden');
+      
+      if(jenisMaster === 'Blok') {
+        document.getElementById('wp-m-blok').classList.remove('hidden');
+        document.getElementById('m-blok-nama').value = ''; document.getElementById('m-blok-mulai').value = '';
+        document.getElementById('th-m-col1').innerText = "Nama Blok"; document.getElementById('th-m-col2').innerText = "Mulai Hunian"; document.getElementById('th-m-col3').innerText = "-";
+        setTimeout(() => document.getElementById('m-blok-nama').focus(), 200);
+      } else if(jenisMaster === 'Iuran') {
+        document.getElementById('wp-m-iuran').classList.remove('hidden');
+        document.getElementById('m-iuran-jenis').value = ''; document.getElementById('m-iuran-rupiah').value = '';
+        document.getElementById('th-m-col1').innerText = "Jenis Iuran"; document.getElementById('th-m-col2').innerText = "Nominal Rupiah"; document.getElementById('th-m-col3').innerText = "Kelola Atribut";
+        setTimeout(() => document.getElementById('m-iuran-jenis').focus(), 200);
+      } else if(jenisMaster === 'Pengeluaran') {
+        document.getElementById('wp-m-keluar').classList.remove('hidden');
+        document.getElementById('m-keluar-nama').value = '';
+        document.getElementById('th-m-col1').innerText = "Nama Alokasi Pengeluaran"; document.getElementById('th-m-col2').innerText = "-"; document.getElementById('th-m-col3').innerText = "-";
+        setTimeout(() => document.getElementById('m-keluar-nama').focus(), 200);
+      } else if(jenisMaster === 'User') {
+        document.getElementById('wp-m-user').classList.remove('hidden');
+        document.getElementById('m-user-uid').value = ''; document.getElementById('m-user-pwd').value = ''; document.getElementById('m-user-nama').value = '';
+        document.getElementById('th-m-col1').innerText = "ID Username"; document.getElementById('th-m-col2').innerText = "Nama Pengguna"; document.getElementById('th-m-col3').innerText = "Role Otoritas";
+        setTimeout(() => document.getElementById('m-user-uid').focus(), 200);
+      } else if(jenisMaster === 'Kunci') {
+        document.getElementById('wp-m-kunci').classList.remove('hidden');
+        document.getElementById('m-kunci-bulan').value = '';
+        document.getElementById('th-m-col1').innerText = "Bulan Periode"; document.getElementById('th-m-col2').innerText = "Status Gembok"; document.getElementById('th-m-col3').innerText = "-";
+        setTimeout(() => document.getElementById('m-kunci-bulan').focus(), 200);
+      }
+      
+      let isReadOnly = false;
+      if (jenisMaster === 'Kunci' && sessionAkses.mstKunci !== 1) isReadOnly = true;
+      if (jenisMaster !== 'Kunci' && jenisMaster !== 'User' && sessionAkses.mstData === 2) isReadOnly = true;
+
+      if (isReadOnly) { document.getElementById('wrapper-input-master').classList.add('hidden'); } 
+      else { document.getElementById('wrapper-input-master').classList.remove('hidden'); }
+      
+      await muatMasterGridSistem();
+      document.getElementById('form-submenu-pengaturan').classList.add('hidden');
+      document.getElementById('form-master-workspace').classList.remove('hidden');
+    }
+
+    async function muatMasterGridSistem() {
+      document.getElementById('master-grid-body').innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-500">Memuat baris master...</td></tr>';
+      
+      const res = await callAPI('getMasterGridData', { jenisMaster: currentMasterWorkspace });
+      rawMasterGridData = res; 
+      masterGridCurrentPage = 1; 
+      renderMasterGridKeLayar();
+    }
+
+    function renderMasterGridKeLayar() {
+      const kw = document.getElementById('master-grid-search').value.toLowerCase();
+      const tbody = document.getElementById('master-grid-body'); tbody.innerHTML = '';
+      
+      let saring = rawMasterGridData.filter(d => String(d.field1).toLowerCase().includes(kw) && d.status_aktif == 0);
+      if(!saring.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-500">Tidak ada baris data master aktif.</td></tr>';
+        document.getElementById('master-grid-info').innerText = "Hal 1 dari 1"; return;
+      }
+      
+      const totalHalaman = Math.ceil(saring.length / 10);
+      if(masterGridCurrentPage > totalHalaman) masterGridCurrentPage = totalHalaman;
+      const start = (masterGridCurrentPage - 1) * 10;
+      const halamanData = saring.slice(start, start + 10);
+      
+      let isReadOnly = false;
+      if (currentMasterWorkspace === 'Kunci' && sessionAkses.mstKunci !== 1) isReadOnly = true;
+      if (currentMasterWorkspace !== 'Kunci' && currentMasterWorkspace !== 'User' && sessionAkses.mstData === 2) isReadOnly = true;
+
+      halamanData.forEach(d => {
+        let aksiHtml = '';
+        if (!isReadOnly) {
+          aksiHtml = `
+            <button onclick="panggilFormEditMaster('${d.id}')" class="text-blue-400 hover:text-blue-300"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="panggilConfirmBoxCustom('master-hapus', '${d.id}')" class="text-red-400 hover:text-red-300 ml-1"><i class="fa-solid fa-trash"></i></button>
+          `;
+        } else { aksiHtml = `<span class="text-slate-600" title="Hanya Lihat"><i class="fa-solid fa-lock"></i></span>`; }
+
+        tbody.innerHTML += `
+          <tr class="border-b border-slate-800 hover:bg-slate-750 text-slate-300">
+            <td class="py-2 px-1 font-medium text-white">${d.field1}</td>
+            <td class="py-2 px-1">${typeof d.field2 === 'number' ? 'Rp ' + d.field2.toLocaleString('id-ID') : d.field2}</td>
+            <td class="py-2 px-1 text-slate-400">${d.field3}</td>
+            <td class="py-2 px-1 text-center space-x-2">${aksiHtml}</td>
+          </tr>
+        `;
+      });
+      document.getElementById('master-grid-info').innerText = `Hal ${masterGridCurrentPage} dari ${totalHalaman}`;
+    }
+
+    function navigasiHalamanMasterGrid(arah) { masterGridCurrentPage += arah; if(masterGridCurrentPage < 1) masterGridCurrentPage = 1; renderMasterGridKeLayar(); }
+
+    function panggilFormEditMaster(idIndex) {
+      editMasterRowId = idIndex;
+      let item = rawMasterGridData.find(d => d.id == idIndex); if(!item) return;
+      document.getElementById('btn-simpan-master').innerText = "UPDATE DATA MASTER (EDIT MODE)";
+
+      if(currentMasterWorkspace === 'Blok') {
+        document.getElementById('m-blok-nama').value = item.field1; document.getElementById('m-blok-mulai').value = item.field2; document.getElementById('m-blok-nama').focus();
+      } else if(currentMasterWorkspace === 'Iuran') {
+        document.getElementById('m-iuran-jenis').value = item.field1; document.getElementById('m-iuran-rupiah').value = item.field2; document.getElementById('m-iuran-jenis').focus();
+      } else if(currentMasterWorkspace === 'Pengeluaran') {
+        document.getElementById('m-keluar-nama').value = item.field1; document.getElementById('m-keluar-nama').focus();
+      } else if(currentMasterWorkspace === 'User') {
+        document.getElementById('m-user-uid').value = item.field1; document.getElementById('m-user-nama').value = item.field2; document.getElementById('m-user-role').value = item.field3; document.getElementById('m-user-uid').focus();
+      } else if(currentMasterWorkspace === 'Kunci') {
+        document.getElementById('m-kunci-bulan').value = item.field1; document.getElementById('m-kunci-bulan').focus();
+      }
+    }
+
+    async function eksekusiSimpanMaster() {
+      let payload = {};
+      if(currentMasterWorkspace === 'Blok') {
+        payload = { nama: document.getElementById('m-blok-nama').value, mulai_hunian: document.getElementById('m-blok-mulai').value };
+        if(!payload.nama || !payload.mulai_hunian) return tampilkanMsgBox("Peringatan", "Nama blok dan mulai hunian wajib diisi.", "gagal");
+      } else if(currentMasterWorkspace === 'Iuran') {
+        payload = { jenis: document.getElementById('m-iuran-jenis').value, rupiah: parseFloat(document.getElementById('m-iuran-rupiah').value), rutin: parseInt(document.querySelector('input[name="m-iuran-rutin"]:checked').value) };
+        if(!payload.jenis || isNaN(payload.rupiah)) return tampilkanMsgBox("Peringatan", "Lengkapi kolom jenis iuran and rupiah.", "gagal");
+      } else if(currentMasterWorkspace === 'Pengeluaran') {
+        payload = { nama: document.getElementById('m-keluar-nama').value };
+        if(!payload.nama) return tampilkanMsgBox("Peringatan", "Nama alokasi pengeluaran kas wajib diisi.", "gagal");
+      } else if(currentMasterWorkspace === 'User') {
+        payload = { user: document.getElementById('m-user-uid').value, pass: document.getElementById('m-user-pwd').value, nama_real: document.getElementById('m-user-nama').value, role: document.getElementById('m-user-role').value };
+        if(!payload.user || !payload.pass || !payload.nama_real) return tampilkanMsgBox("Peringatan", "Kredensial isian user wajib dilengkapi.", "gagal");
+      } else if(currentMasterWorkspace === 'Kunci') {
+        payload = { periode: document.getElementById('m-kunci-bulan').value, status: parseInt(document.querySelector('input[name="m-kunci-status"]:checked').value) };
+        if(!payload.periode) return tampilkanMsgBox("Peringatan", "Bulan tahun periode wajib dipilih.", "gagal");
+      }
+
+      document.getElementById('btn-simpan-master').disabled = true; document.getElementById('btn-simpan-master').innerText = "MENULIS...";
+      
+      const res = await callAPI('simpanMasterDataSistem', { jenisMaster: currentMasterWorkspace, idIndex: editMasterRowId, payload });
+      
+      document.getElementById('btn-simpan-master').disabled = false; document.getElementById('btn-simpan-master').innerText = "SIMPAN DATA MASTER";
+      if(res.sukses) { 
+        tampilkanMsgBox("Sukses", "Data master berhasil diperbarui.", "sukses"); bukaWorkspaceMaster(currentMasterWorkspace); 
+      } else { 
+        tampilkanMsgBox("Ditolak", res.pesan, "gagal"); 
+      }
+    }
+
+    async function jalankanProsesHapusMaster(idIndex) {
+      const res = await callAPI('hapusMasterDataSistem', { jenisMaster: currentMasterWorkspace, idIndex });
+      if(res.sukses) { 
+        tampilkanMsgBox("Sukses", "Baris master berhasil dinonaktifkan.", "sukses"); muatMasterGridSistem(); 
+      } else { 
+        tampilkanMsgBox("Ditolak", res.pesan, "gagal"); 
+      }
+    }
+
+    function bukaSubMenuTransaksi() {
+      document.getElementById('form-menu').classList.add('hidden');
+      document.getElementById('form-submenu-transaksi').classList.remove('hidden');
+    }
+
+    function kembaliKeSubTransaksi() {
+      document.getElementById('form-transaksi-workspace').classList.add('hidden');
+      document.getElementById('form-submenu-transaksi').classList.remove('hidden');
+    }
+
+    async function bukaWorkspaceTransaksi(jenisForm) {
+      document.getElementById('box-wrapper-dana').classList.add('hidden');
+      const selDana = document.getElementById('ins-dana');
+      selDana.innerHTML = '';
+      
+      currentWorkspace = jenisForm;
+      document.getElementById('txt-workspace-title').innerText = "Form Transaksi " + jenisForm;
+      document.getElementById('ins-tanggal').value = new Date().toISOString().substring(0, 10);
+      
+      document.getElementById('box-wrapper-blok').classList.add('hidden');
+      document.getElementById('box-wrapper-multi-periode').classList.add('hidden');
+      document.getElementById('box-wrapper-deskripsi').classList.add('hidden');
+      
+      const selKategori = document.getElementById('ins-kategori'); selKategori.innerHTML = '';
+      
+      if(jenisForm === 'Iuran') {
+        document.getElementById('box-wrapper-blok').classList.remove('hidden');
+        document.getElementById('box-wrapper-multi-periode').classList.remove('hidden');
+        
+        const dbRes = await callAPI('getMasterDataAwal');
+        masterDatabase = dbRes; selKategori.innerHTML = '';
+        masterDatabase.iuranRutin.forEach(i => selKategori.innerHTML += `<option value="${i.nama}" data-tarif="${i.tarif}">${i.nama}</option>`);
+        logikaKategoriBerubah();
+      } else if(jenisForm === 'Penerimaan') {
+        document.getElementById('box-wrapper-deskripsi').classList.remove('hidden');
+        masterDatabase.iuranSukarela.forEach(item => { selKategori.innerHTML += `<option value="${item.nama}" data-tarif="${item.tarif}">${item.nama}</option>`; });
+      } else if(jenisForm === 'Pengeluaran') {
+        document.getElementById('box-wrapper-deskripsi').classList.remove('hidden');
+        document.getElementById('box-wrapper-dana').classList.remove('hidden');
+        
+        masterDatabase.dana.forEach(item => { selDana.innerHTML += `<option value="${item}">${item}</option>`; });
+        masterDatabase.keluar.forEach(item => { selKategori.innerHTML += `<option value="${item}">${item}</option>`; });
+      }
+      
+      if (sessionAkses.trans === 2) { document.getElementById('wrapper-input-transaksi').classList.add('hidden'); } 
+      else { document.getElementById('wrapper-input-transaksi').classList.remove('hidden'); }
+
+      logikaKategoriBerubah(); 
+      await muatGridSistem();
+      document.getElementById('form-submenu-transaksi').classList.add('hidden');
+      document.getElementById('form-transaksi-workspace').classList.remove('hidden');
+    }
+
+    function logikaKategoriBerubah() {
+      const sel = document.getElementById('ins-kategori');
+      const opt = sel.options[sel.selectedIndex];
+      const txtNominal = document.getElementById('ins-nominal');
+      
+      if (currentWorkspace === 'Iuran') {
+        let tarif = opt ? opt.getAttribute('data-tarif') : '';
+        txtNominal.value = tarif;
+        
+        if (parseInt(tarif) === 0 || tarif === '') {
+          txtNominal.disabled = false; 
+        } else {
+          txtNominal.disabled = true;  
+        }
+        
+      } else if(currentWorkspace === 'Penerimaan') {
+        txtNominal.value = opt ? opt.getAttribute('data-tarif') : ''; txtNominal.disabled = false; 
+      } else { txtNominal.value = ''; txtNominal.disabled = false; }
+    }
+
+    function bukaDropdownBlok() {
+      const listDiv = document.getElementById('dropdown-blok-list'); listDiv.classList.remove('hidden'); filterDropdownBlok();
+    }
+
+    function filterDropdownBlok() {
+      const s = document.getElementById('ins-blok-search').value.toUpperCase();
+      const listDiv = document.getElementById('dropdown-blok-list'); listDiv.innerHTML = '';
+      const filtered = masterDatabase.blok.filter(b => b.toUpperCase().indexOf(s) > -1);
+      if(filtered.length === 0) { listDiv.innerHTML = '<div class="text-xs text-slate-500 p-2">Blok tidak ditemukan</div>'; return; }
+      filtered.forEach(b => { listDiv.innerHTML += `<div onclick="pilihBlokSistem('${b}')" class="text-xs p-2 hover:bg-blue-600 hover:text-white cursor-pointer">${b}</div>`; });
+    }
+
+    function pilihBlokSistem(nilaiBlok) {
+      document.getElementById('ins-blok-search').value = nilaiBlok; document.getElementById('dropdown-blok-list').classList.add('hidden');
+    }
+
+    document.addEventListener('click', function(e) {
+      if(!e.target.closest('#box-wrapper-blok')) { document.getElementById('dropdown-blok-list').classList.add('hidden'); }
+    });
+
+    async function muatGridSistem() {
+      const tgl = document.getElementById('ins-tanggal').value; if(!tgl) return;
+      document.getElementById('grid-body-data').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-500">Memuat histori...</td></tr>';
+      
+      const res = await callAPI('getTransaksiTerfilter', { jenisForm: currentWorkspace, tanggalStr: tgl });
+      rawGridData = res; 
+      gridCurrentPage = 1; 
+      renderDataGridKeLayar();
+    }
+
+    function renderDataGridKeLayar() {
+      const keyword = document.getElementById('grid-search').value.toLowerCase();
+      const tbody = document.getElementById('grid-body-data'); tbody.innerHTML = '';
+      
+      let dataSaring = rawGridData.filter(d => d.deskripsi.toLowerCase().includes(keyword));
+      if(dataSaring.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-500">Tidak ada data transaksi.</td></tr>';
+        document.getElementById('grid-info-page').innerText = "Hal 1 dari 1"; return;
+      }
+      
+      const totalHalaman = Math.ceil(dataSaring.length / 10);
+      if(gridCurrentPage > totalHalaman) gridCurrentPage = totalHalaman;
+      const indexMulai = (gridCurrentPage - 1) * 10;
+      const dataHalaman = dataSaring.slice(indexMulai, indexMulai + 10);
+      
+      dataHalaman.forEach((d, idx) => {
+        const noUrut = indexMulai + idx + 1;
+        let aksiHtml = '';
+        if (sessionAkses.trans === 1) {
+          aksiHtml = `<button onclick="panggilConfirmBoxCustom('transaksi-hapus', '${d.id_index}')" class="text-red-400 hover:text-red-300 p-1"><i class="fa-solid fa-trash"></i></button>`;
+        } else { aksiHtml = `<span class="text-slate-600" title="Hanya Lihat"><i class="fa-solid fa-lock"></i></span>`; }
+
+        tbody.innerHTML += `
+          <tr class="border-b border-slate-800 hover:bg-slate-750 text-slate-300">
+            <td class="py-2 px-1 text-center">${noUrut}</td>
+            <td class="py-2 px-1 font-mono text-blue-400">${d.nobukti}</td>
+            <td class="py-2 px-1">${d.deskripsi}</td>
+            <td class="py-2 px-1 text-right font-medium text-emerald-400">${Number(d.rupiah).toLocaleString('id-ID')}</td>
+            <td class="py-2 px-1 text-center">${aksiHtml}</td>
+          </tr>
+        `;
+      });
+      document.getElementById('grid-info-page').innerText = `Hal ${gridCurrentPage} dari ${totalHalaman}`;
+    }
+
+    function navigasiHalamanGrid(arah) { gridCurrentPage += arah; if(gridCurrentPage < 1) gridCurrentPage = 1; renderDataGridKeLayar(); }
+
+    async function eksekusiSimpanData() {
+      const tgl = document.getElementById('ins-tanggal').value;
+      const nominal = document.getElementById('ins-nominal').value;
+      if(!tgl || !nominal) return tampilkanMsgBox("Peringatan", "Tanggal dan Nominal Rupiah wajib diisi.", "gagal");
+      if(tgl < masterDatabase.batasTanggal) {
+        return tampilkanMsgBox("Ditolak", "Gagal! Tanggal transaksi tidak boleh mundur di bawah batas Saldo Awal (" + masterDatabase.batasTanggal + ").", "gagal");
+      }
+      
+      let formPayload = {
+        tanggal: tgl, 
+        kategori: document.getElementById('ins-kategori').value, 
+        nominal: parseFloat(nominal), 
+        metode: document.getElementById('ins-metode').value,
+        dana: document.getElementById('ins-dana').value,
+        blok: document.getElementById('ins-blok-search') ? document.getElementById('ins-blok-search').value : '',
+        periodeAwal: document.getElementById('ins-periode-awal') ? document.getElementById('ins-periode-awal').value : '',
+        periodeAkhir: document.getElementById('ins-periode-akhir') ? document.getElementById('ins-periode-akhir').value : '',
+        textDescription: document.getElementById('ins-deskripsi') ? document.getElementById('ins-deskripsi').value : ''
+      };
+
+      if(currentWorkspace === 'Iuran' && (!formPayload.blok || !formPayload.periodeAwal || !formPayload.periodeAkhir)) {
+        return tampilkanMsgBox("Peringatan", "Blok dan Periode Bulan Pembayaran wajib dilengkapi.", "gagal");
+      }
+      
+      const btn = document.getElementById('btn-simpan-transaksi'); btn.disabled = true; btn.innerText = "MENGAMBIL NO ANTREAN KAS...";
+      
+      const res = await callAPI('simpanTransaksiSistem', { jenisForm: currentWorkspace, formRaw: formPayload, namaPencatat: sessionUser.nama });
+      
+      btn.disabled = false; btn.innerText = "SIMPAN TRANSAKSI";
+      if(res.sukses) {
+        tampilkanMsgBox("Sukses", "Transaksi berhasil disimpan dengan Nomor Bukti: " + res.nobukti, "sukses");
+        if(document.getElementById('ins-blok-search')) document.getElementById('ins-blok-search').value = '';
+        if(document.getElementById('ins-deskripsi')) document.getElementById('ins-deskripsi').value = '';
+        document.getElementById('ins-nominal').value = ''; 
+        await muatGridSistem(); 
+        document.getElementById('ins-tanggal').focus(); 
+      } else { 
+        tampilkanMsgBox("Ditolak", res.pesan, "gagal"); 
+      }
+    }
+
+    async function jalankanProsesHapusData(idIndex) {
+      const tgl = document.getElementById('ins-tanggal').value;
+      const res = await callAPI('hapusTransaksiSistem', { jenisForm: currentWorkspace, idIndex, tanggalStr: tgl });
+      if(res.sukses) { 
+        tampilkanMsgBox("Sukses", "Data transaksi berhasil dihapus dari sistem.", "sukses"); await muatGridSistem(); 
+      } else { 
+        tampilkanMsgBox("Ditolak", res.pesan, "gagal"); 
+      }
+    }
+    
+    async function bukaModalEditProfile() {
+      if (!sessionUser.username) return;
+      const res = await callAPI('getProfile', { username: sessionUser.username });
+      if (res.sukses) {
+        document.getElementById('prof-username').value = res.username;
+        document.getElementById('prof-password').value = res.password;
+        document.getElementById('prof-nama').value = res.nama;
+        document.getElementById('modal-edit-profile').classList.remove('hidden');
+      } else {
+        tampilkanMsgBox("Gagal", res.pesan, "gagal");
+      }
+    }
+
+    function tutupModalEditProfile() { document.getElementById('modal-edit-profile').classList.add('hidden'); }
+
+    async function eksekusiUpdateProfile() {
+      const uBaru = document.getElementById('prof-username').value.trim();
+      const pBaru = document.getElementById('prof-password').value.trim();
+      const nBaru = document.getElementById('prof-nama').value.trim();
+
+      if (!uBaru || !pBaru || !nBaru) {
+        return tampilkanMsgBox("Peringatan", "Semua kolom profil wajib diisi.", "gagal");
+      }
+
+      const btn = document.getElementById('btn-simpan-profile');
+      btn.disabled = true; btn.innerText = "MENYIMPAN...";
+
+      const res = await callAPI('updateProfile', { usernameLama: sessionUser.username, usernameBaru: uBaru, passwordBaru: pBaru, namaBaru: nBaru });
+      
+      btn.disabled = false; btn.innerText = "UPDATE PROFIL";
+      if (res.sukses) {
+        tampilkanMsgBox("Sukses", "Profil Anda berhasil diperbarui.", "sukses");
+        sessionUser.username = uBaru;
+        sessionUser.nama = nBaru;
+        document.getElementById('lbl-nama').innerText = nBaru;
+        tutupModalEditProfile();
+      } else {
+        tampilkanMsgBox("Ditolak", res.pesan, "gagal");
+      }
+    }
+ 
+    function tutupModalDetailTunggakan() { document.getElementById('modal-detail-tunggakan').classList.add('hidden'); }
+
+    async function renderOpsiRoleDariBackend() {
+      const selectRole = document.getElementById('m-user-role');
+      if (!selectRole) return;
+
+      try {
+        // 🛡️ Frontend mengetuk pintu backend untuk minta daftar role secara gaib
+        let response = await fetch(`${BACKEND_URL}?action=getDaftarRoleAman`);
+        let hasil = await response.json();
+
+        if (hasil.sukses) {
+          // Pasang hasilnya ke dalam HTML secara instan
+          selectRole.innerHTML = hasil.roles.map(role => `<option value="${role}">${role}</option>`).join('');
+        }
+      } catch (e) {
+        console.error("Gagal mengambil data role dari server:", e);
+      }
+    }
+  </script>
+</body>
+</html>
